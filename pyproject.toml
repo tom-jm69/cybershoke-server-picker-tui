@@ -1,0 +1,17 @@
+[project]
+name = "cybershoke-server-picker-tui"
+version = "0.1.0"
+description = "Terminal UI for browsing and connecting to Cybershoke CS2 servers"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.12.5",
+    "requests>=2.33.0",
+    "textual>=8.2.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tui", "src/cybershoke"]
+
+[project.scripts]
+cybershoke = "tui.app:main"
