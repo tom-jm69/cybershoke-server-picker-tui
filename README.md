@@ -67,3 +67,19 @@ src/
     service.py  — Data layer (refresh, filtering, sorting)
 main.py
 ```
+
+## Debug
+
+Pass `--debug` to write debug output to `cybershoke-debug.log` in the working directory:
+
+```bash
+uv run main.py --debug
+# or
+cybershoke --debug
+```
+
+To watch the log live in a second terminal:
+
+```bash
+tail -f cybershoke-debug.log
+```

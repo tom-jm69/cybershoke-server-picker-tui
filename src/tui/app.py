@@ -1,3 +1,4 @@
+import logging
 import re
 import socket
 import subprocess
@@ -45,6 +46,17 @@ def _cat_id(cat: str) -> str:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="Log debug output to cybershoke-debug.log")
+    args = parser.parse_args()
+    if args.debug:
+        logging.basicConfig(
+            filename="cybershoke-debug.log",
+            level=logging.DEBUG,
+            format="%(asctime)s %(levelname)s %(message)s",
+        )
+        logging.debug("Debug logging enabled")
     CybershokeApp().run()
 
 
@@ -118,6 +130,7 @@ class CybershokeApp(App):
         self._category: str = ""
         self._sort: str = "players"
         self._refreshing: bool = False
+        self._loaded: bool = False
         self._pings: dict[int, int | None] = {}
         self._ping_token: int = 0
 
@@ -139,10 +152,18 @@ class CybershokeApp(App):
     # ── workers ──────────────────────────────────────────────────────────────
 
     def _do_refresh(self) -> None:
-        self._service.refresh()
+        logging.debug("Fetching server data")
+        try:
+            self._service.refresh()
+        except ValueError as e:
+            logging.error("Refresh failed: %s", e)
+            self.call_from_thread(self.notify, str(e), severity="error")
+            return
+        logging.debug("Server data fetched successfully")
         self.call_from_thread(self._after_refresh)
 
     async def _after_refresh(self) -> None:
+        self._loaded = True
         self._seconds_since_refresh = 0
         modes = self._service.get_modes()
         mode_bar = self.query_one("#mode-bar", Tabs)
@@ -192,15 +213,18 @@ class CybershokeApp(App):
             samples = sorted(s for s in [_ping_server(srv.ip, srv.port) for _ in range(3)] if s is not None)
             return srv.id, samples[len(samples) // 2] if samples else None
 
+        logging.debug("Pinging %d servers", len(servers))
         with ThreadPoolExecutor(max_workers=50) as ex:
             results = list(ex.map(ping_one, servers.values()))
 
         if token != self._ping_token:
+            logging.debug("Ping results discarded (stale token)")
             return
 
         for srv_id, ms in results:
             self._pings[srv_id] = ms
 
+        logging.debug("Ping complete: %d results", len(results))
         self.call_from_thread(self._populate_table)
 
     # ── tab events ───────────────────────────────────────────────────────────
@@ -297,6 +321,9 @@ class CybershokeApp(App):
         self._update_status_bar()
 
     def _update_status_bar(self) -> None:
+        if not self._loaded:
+            self.query_one("#status-bar", Label).update("Loading...")
+            return
         total = self._total_online()
         self.query_one("#status-bar", Label).update(
             f"Updated {self._seconds_since_refresh}s ago  |  Sort: {self._sort}  |  Online: {total}"
@@ -329,6 +356,7 @@ class CybershokeApp(App):
         if server is None:
             return
         url = f"steam://rungameid/730//+connect%20{server.ip}:{server.port}"
+        logging.debug("Connecting to %s:%d (%s)", server.ip, server.port, server.map)
         subprocess.Popen(["xdg-open", url])
         self.notify(f"Connecting to {server.map} ({server.location})")
 
