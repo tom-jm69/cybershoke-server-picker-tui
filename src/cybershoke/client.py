@@ -61,7 +61,9 @@ class Client:
                 url="https://api.cybershoke.net/api/v2/main/data",
                 cookies=self._get_cookies(),
                 headers=self._get_headers(),
+                timeout=10,
             )
-        except Exception:
-            raise ValueError("Did not receive a response!")
-        return Servers(**response.json())
+            response.raise_for_status()
+            return Servers(**response.json())
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Failed to fetch server data: {e}") from e
