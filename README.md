@@ -68,6 +68,10 @@ src/
 main.py
 ```
 
+## Contributing
+
+Issues and PRs are welcome. This is a personal tool so I'll merge what makes sense for my own use — don't expect a roadmap or feature requests to be guaranteed.
+
 ## Debug
 
 Pass `--debug` to write debug output to `cybershoke-debug.log` in the working directory:
