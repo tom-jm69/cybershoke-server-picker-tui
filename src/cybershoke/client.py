@@ -13,45 +13,29 @@ class Client:
 
     def _get_cookies(self) -> dict[str, str]:
         cookies = {
-            "headerServersSetting": "[]",
-            "hideFullAmong": "false",
-            "sCategories": "{}",
-            "competitionsLeague": "high",
-            "gMapFilerv": "[]",
-            "gCategoryFiler": "[]",
-            "glocationFilerNewv": "[]",
+            "app-build-id": "1776790835",
+            "lang_g": "de",
             "gSortFiler": "online",
             "gPrimeFiler": "both",
-            "gSortShopFiler2": "down",
-            "gCompetitionsDataStats": "month",
-            "gCompetitionsDataId": "12",
-            "gCompetitionsDataClass": "low",
-            "gCompetitionsDataHalfmonth": "0",
-            "gProfileSkinchangerFilterQ": "%E2%98%85%20Karambit",
-            "gProfileSkinchangerFilterCollection": "1",
-            "hideFullServers": "true",
-            "gSkipPremiumModal": "0",
             "gServersPrimeMode": "all",
             "gHideFilledServers": "1",
-            "changer_update": "1773293722",
-            "categories": "{}",
+            "hideFullServers": "true",
         }
         return cookies
 
     def _get_headers(self) -> dict[str, str]:
         headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0",
-            "Accept": "application/json, text/plain, */*",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
-            "Origin": "https://cybershoke.net",
             "Sec-GPC": "1",
             "Connection": "keep-alive",
-            "Referer": "https://cybershoke.net/",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site",
-            "Pragma": "no-cache",
-            "Cache-Control": "no-cache",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Priority": "u=0, i",
+            "TE": "trailers",
         }
         return headers
 

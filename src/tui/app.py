@@ -286,6 +286,8 @@ class CybershokeApp(App):
         servers = self._service.get_servers(self._mode, self._category)
         if self._sort == "ping":
             servers = sorted(servers, key=lambda s: self._pings.get(s.id) or 9999)
+        elif self._sort == "mode":
+            servers = sorted(servers, key=lambda s: s.mode, reverse=True)
         else:
             servers = sorted(servers, key=lambda s: s.players, reverse=True)
         for i, srv in enumerate(servers):
@@ -343,7 +345,7 @@ class CybershokeApp(App):
     # ── actions ──────────────────────────────────────────────────────────────
 
     def action_toggle_sort(self) -> None:
-        order = ["players", "ping"]
+        order = ["players", "ping", "mode"]
         self._sort = order[(order.index(self._sort) + 1) % len(order)]
         self._populate_table()
 
