@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import socket
 import subprocess
@@ -57,7 +58,11 @@ def main() -> None:
             format="%(asctime)s %(levelname)s %(message)s",
         )
         logging.debug("Debug logging enabled")
-    CybershokeApp().run()
+    try:
+        CybershokeApp().run()
+    except KeyboardInterrupt:
+        pass
+    os._exit(0)
 
 
 class CybershokeApp(App):
@@ -119,6 +124,7 @@ class CybershokeApp(App):
 
         # sorting
         Binding("s", "toggle_sort", "Sort", show=True),
+        Binding("o", "toggle_order", "Order", show=True),
     ]
 
     def __init__(self) -> None:
@@ -129,6 +135,7 @@ class CybershokeApp(App):
         self._mode: str = ""
         self._category: str = ""
         self._sort: str = "players"
+        self._sort_asc: bool = False  # players default: descending
         self._refreshing: bool = False
         self._loaded: bool = False
         self._pings: dict[int, int | None] = {}
@@ -285,11 +292,11 @@ class CybershokeApp(App):
 
         servers = self._service.get_servers(self._mode, self._category)
         if self._sort == "ping":
-            servers = sorted(servers, key=lambda s: self._pings.get(s.id) or 9999)
+            servers = sorted(servers, key=lambda s: self._pings.get(s.id) or 9999, reverse=not self._sort_asc)
         elif self._sort == "mode":
-            servers = sorted(servers, key=lambda s: s.mode, reverse=True)
+            servers = sorted(servers, key=lambda s: s.mode, reverse=not self._sort_asc)
         else:
-            servers = sorted(servers, key=lambda s: s.players, reverse=True)
+            servers = sorted(servers, key=lambda s: s.players, reverse=not self._sort_asc)
         for i, srv in enumerate(servers):
             full = srv.players >= srv.maxplayers
             style = "red" if full else "green"
@@ -327,8 +334,9 @@ class CybershokeApp(App):
             self.query_one("#status-bar", Label).update("Loading...")
             return
         total = self._total_online()
+        order = "asc" if self._sort_asc else "desc"
         self.query_one("#status-bar", Label).update(
-            f"Updated {self._seconds_since_refresh}s ago  |  Sort: {self._sort}  |  Online: {total}"
+            f"Updated {self._seconds_since_refresh}s ago  |  Sort: {self._sort} ({order})  |  Online: {total}"
         )
 
     def _total_online(self) -> int:
@@ -344,9 +352,16 @@ class CybershokeApp(App):
 
     # ── actions ──────────────────────────────────────────────────────────────
 
+    _SORT_DEFAULTS: dict[str, bool] = {"players": False, "ping": True, "mode": True}
+
     def action_toggle_sort(self) -> None:
-        order = ["players", "ping", "mode"]
-        self._sort = order[(order.index(self._sort) + 1) % len(order)]
+        fields = ["players", "ping", "mode"]
+        self._sort = fields[(fields.index(self._sort) + 1) % len(fields)]
+        self._sort_asc = self._SORT_DEFAULTS[self._sort]
+        self._populate_table()
+
+    def action_toggle_order(self) -> None:
+        self._sort_asc = not self._sort_asc
         self._populate_table()
 
     def action_refresh(self) -> None:
