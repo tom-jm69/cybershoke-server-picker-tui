@@ -42,7 +42,7 @@ class Client:
     def get_server_data(self) -> Servers:
         try:
             response = self.web_client.get(
-                url="https://api.cybershoke.net/api/v2/main/data",
+                url="https://cybershoke.net/api/api/v2/main/data",
                 cookies=self._get_cookies(),
                 headers=self._get_headers(),
                 timeout=10,
