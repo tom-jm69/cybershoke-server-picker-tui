@@ -1,53 +1,48 @@
-from typing import Optional
+import re
 
-import requests
+from curl_cffi.requests import Session
 
 from .models import Servers
 
+_PAGE_URL = "https://cybershoke.net/de/cs2/servers/dm"
+_API_URL = "https://cybershoke.net/api/api/v2/main/data"
+_DOMAIN = "cybershoke.net"
+
 
 class Client:
-    def __init__(
-        self, web_client: Optional[requests.Session] = requests.Session()
-    ) -> None:
-        self.web_client = web_client
+    def __init__(self) -> None:
+        self.web_client = Session(impersonate="firefox133")
+        self._bootstrapped = False
 
-    def _get_cookies(self) -> dict[str, str]:
-        cookies = {
-            "app-build-id": "1776790835",
+    def _bootstrap(self) -> None:
+        r = self.web_client.get(url=_PAGE_URL, timeout=10)
+        r.raise_for_status()
+
+        m = re.search(r'app-build-id[=:]["\s]*(\d+)', r.text)
+        build_id = m.group(1) if m else "1778604034"
+
+        for name, value in {
+            "app-build-id": build_id,
+            "last_page": "/de/cs2/servers/dm",
+            "cookie_read": "1",
             "lang_g": "de",
             "gSortFiler": "online",
             "gPrimeFiler": "both",
             "gServersPrimeMode": "all",
             "gHideFilledServers": "1",
             "hideFullServers": "true",
-        }
-        return cookies
+        }.items():
+            self.web_client.cookies.set(name, value, domain=_DOMAIN)
 
-    def _get_headers(self) -> dict[str, str]:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Sec-GPC": "1",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-        return headers
+        self._bootstrapped = True
 
     def get_server_data(self) -> Servers:
         try:
-            response = self.web_client.get(
-                url="https://cybershoke.net/api/api/v2/main/data",
-                cookies=self._get_cookies(),
-                headers=self._get_headers(),
-                timeout=10,
-            )
+            if not self._bootstrapped:
+                self._bootstrap()
+
+            response = self.web_client.get(url=_API_URL, timeout=10)
             response.raise_for_status()
             return Servers(**response.json())
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             raise ValueError(f"Failed to fetch server data: {e}") from e

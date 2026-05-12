@@ -11,11 +11,12 @@ class ServerService:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
+        self._client = Client()
         self._data: Optional[Servers] = None
         self._last_updated: Optional[datetime] = None
 
     def refresh(self) -> None:
-        data = Client().get_server_data()
+        data = self._client.get_server_data()
         with self._lock:
             self._data = data
             self._last_updated = datetime.now()
